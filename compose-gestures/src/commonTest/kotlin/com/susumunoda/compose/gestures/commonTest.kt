@@ -1,4 +1,4 @@
-package com.susumunoda.compose.dragcontext
+package com.susumunoda.compose.gestures
 
 import kotlin.test.Test
 import kotlin.test.assertTrue

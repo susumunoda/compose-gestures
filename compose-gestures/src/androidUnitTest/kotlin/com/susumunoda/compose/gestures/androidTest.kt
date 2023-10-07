@@ -1,4 +1,4 @@
-package com.susumunoda.compose.dragcontext
+package com.susumunoda.compose.gestures
 
 import org.junit.Assert.assertTrue
 import org.junit.Test

@@ -25,7 +25,7 @@ kotlin {
         iosSimulatorArm64()
     ).forEach {
         it.binaries.framework {
-            baseName = "dragcontext"
+            baseName = "compose-gestures"
         }
     }
 
@@ -46,7 +46,7 @@ kotlin {
 }
 
 android {
-    namespace = "com.susumunoda.compose.dragcontext"
+    namespace = "com.susumunoda.compose.gestures"
     compileSdk = 34
     defaultConfig {
         minSdk = 24

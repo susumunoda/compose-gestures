@@ -1,4 +1,4 @@
-package com.susumunoda.compose.dragcontext
+package com.susumunoda.compose.gestures
 
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.Box

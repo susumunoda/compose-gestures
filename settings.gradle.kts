@@ -13,5 +13,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "Compose DragContext"
-include(":dragcontext")
+rootProject.name = "Compose Gestures"
+include(":compose-gestures")

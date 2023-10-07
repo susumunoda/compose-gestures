@@ -1,6 +1,7 @@
 plugins {
     kotlin("multiplatform")
     id("com.android.library")
+    `maven-publish`
 }
 
 @OptIn(org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi::class)
@@ -8,6 +9,8 @@ kotlin {
     targetHierarchy.default()
 
     android {
+        publishLibraryVariants("release")
+
         compilations.all {
             kotlinOptions {
                 jvmTarget = "1.8"
@@ -46,3 +49,6 @@ android {
         minSdk = 24
     }
 }
+
+group = "com.susumunoda.compose"
+version = "1.0"

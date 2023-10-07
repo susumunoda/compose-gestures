@@ -1,6 +1,7 @@
 plugins {
     kotlin("multiplatform")
     id("com.android.library")
+    id("org.jetbrains.compose")
     `maven-publish`
 }
 
@@ -31,7 +32,9 @@ kotlin {
     sourceSets {
         val commonMain by getting {
             dependencies {
-                //put your multiplatform dependencies here
+                implementation(compose.foundation)
+                // Workaround as per https://youtrack.jetbrains.com/issue/KT-41821
+                implementation("org.jetbrains.kotlinx:atomicfu:0.17.3")
             }
         }
         val commonTest by getting {

@@ -1,4 +1,4 @@
-package com.susumunoda.compose.gestures.ui.theme
+package com.susumunoda.compose.gestures.demo.ui.theme
 
 import androidx.compose.ui.graphics.Color
 

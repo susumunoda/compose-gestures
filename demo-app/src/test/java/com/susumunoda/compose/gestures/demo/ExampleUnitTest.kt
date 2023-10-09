@@ -1,4 +1,4 @@
-package com.susumunoda.compose.gestures
+package com.susumunoda.compose.gestures.demo
 
 import org.junit.Test
 

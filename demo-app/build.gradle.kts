@@ -5,11 +5,11 @@ plugins {
 }
 
 android {
-    namespace = "com.susumunoda.compose.gestures"
+    namespace = "com.susumunoda.compose.gestures.demo"
     compileSdk = 34
 
     defaultConfig {
-        applicationId = "com.susumunoda.compose.gestures"
+        applicationId = "com.susumunoda.compose.gestures.demo"
         minSdk = 24
         targetSdk = 34
         versionCode = 1

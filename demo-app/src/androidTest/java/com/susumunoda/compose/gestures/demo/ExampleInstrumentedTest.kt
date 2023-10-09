@@ -1,4 +1,4 @@
-package com.susumunoda.compose.gestures
+package com.susumunoda.compose.gestures.demo
 
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -19,6 +19,6 @@ class ExampleInstrumentedTest {
     fun useAppContext() {
         // Context of the app under test.
         val appContext = InstrumentationRegistry.getInstrumentation().targetContext
-        assertEquals("com.susumunoda.compose.gestures", appContext.packageName)
+        assertEquals("com.susumunoda.compose.gestures.demo", appContext.packageName)
     }
 }

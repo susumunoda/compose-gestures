@@ -15,3 +15,4 @@ dependencyResolutionManagement {
 
 rootProject.name = "Compose Gestures"
 include(":compose-gestures")
+include(":demo-app")

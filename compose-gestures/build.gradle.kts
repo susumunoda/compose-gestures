@@ -54,4 +54,4 @@ android {
 }
 
 group = "com.susumunoda.compose"
-version = "1.0"
+version = "0.1.0"

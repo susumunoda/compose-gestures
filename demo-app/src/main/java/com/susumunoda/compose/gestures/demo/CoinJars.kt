@@ -97,7 +97,7 @@ private fun Coin(coin: Coin, modifier: Modifier = Modifier) {
                 modifier = modifier
                     .size(coin.size)
                     .clip(CircleShape)
-                    .alpha(if (dragTargetStatus == DragTargetStatus.DRAGGING) .5f else 1f)
+                    .alpha(if (dragTargetStatus == DragTargetStatus.DRAGGED) .5f else 1f)
                     .background(Color.Red),
                 contentAlignment = Alignment.Center
             ) {
@@ -122,7 +122,7 @@ private fun Jar(
             DropTarget(
                 onDragTargetAdded = { total += it },
                 onDragTargetRemoved = { total -= it },
-                dropOptions = DropOptions(maxDragTargets = Int.MAX_VALUE)
+                options = DropOptions(maxDragTargets = Int.MAX_VALUE)
             ) {
                 Box(
                     Modifier

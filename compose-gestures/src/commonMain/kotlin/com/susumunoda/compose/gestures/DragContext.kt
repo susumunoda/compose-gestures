@@ -42,18 +42,18 @@ enum class SnapPosition(val calculateOffset: (Rect) -> Offset) {
     BOTTOM_RIGHT(Rect::bottomRight)
 }
 
-enum class DragTargetStatus { NONE, DRAGGING, DROPPED }
+enum class DragTargetStatus { NONE, DRAGGED, DROPPED }
 
 class DragContext<T> {
     private inner class DragTargetState(
         val data: T,
-        val dragTargetStatus: MutableState<DragTargetStatus> = mutableStateOf(DragTargetStatus.NONE),
-        val dragOffset: MutableState<Offset> = mutableStateOf(Offset.Zero),
+        val status: MutableState<DragTargetStatus> = mutableStateOf(DragTargetStatus.NONE),
+        val offset: MutableState<Offset> = mutableStateOf(Offset.Zero),
         val dropTargets: MutableSet<DropTargetState> = mutableSetOf()
     ) {
         fun resetState() {
-            dragTargetStatus.value = DragTargetStatus.NONE
-            dragOffset.value = Offset.Zero
+            status.value = DragTargetStatus.NONE
+            offset.value = Offset.Zero
         }
 
         fun detachFromDropTargets() {
@@ -101,25 +101,25 @@ class DragContext<T> {
     @Composable
     fun DragTarget(
         data: T,
-        dragOptions: DragOptions = DragOptions(),
+        options: DragOptions = DragOptions(),
         content: @Composable (DragTargetStatus) -> Unit
     ) {
         val dragTargetState = rememberDragTargetState(data, content)
-        val dragStatusState = dragTargetState.dragTargetStatus
-        val dragOffsetState = dragTargetState.dragOffset
+        val statusState = dragTargetState.status
+        val offsetState = dragTargetState.offset
 
         Box(
             modifier = Modifier
                 .graphicsLayer {
-                    when (dragStatusState.value) {
-                        DragTargetStatus.DRAGGING -> {
-                            scaleX = dragOptions.onDragScaleX
-                            scaleY = dragOptions.onDragScaleY
+                    when (statusState.value) {
+                        DragTargetStatus.DRAGGED -> {
+                            scaleX = options.onDragScaleX
+                            scaleY = options.onDragScaleY
                         }
 
                         DragTargetStatus.DROPPED -> {
-                            scaleX = dragOptions.onDropScaleX
-                            scaleY = dragOptions.onDropScaleY
+                            scaleX = options.onDropScaleX
+                            scaleY = options.onDropScaleY
                         }
 
                         else -> {
@@ -129,9 +129,9 @@ class DragContext<T> {
                     }
                 }
                 .offset {
-                    val dragOffset = dragOffsetState.value
-                    when (dragStatusState.value) {
-                        DragTargetStatus.DRAGGING, DragTargetStatus.NONE -> {
+                    val dragOffset = offsetState.value
+                    when (statusState.value) {
+                        DragTargetStatus.DRAGGED, DragTargetStatus.NONE -> {
                             IntOffset(
                                 x = dragOffset.x.roundToInt(),
                                 y = dragOffset.y.roundToInt()
@@ -149,8 +149,8 @@ class DragContext<T> {
                             // scaling that was applied by `detectDragGestures` for the dragged state,
                             // and then apply the appropriate scaling for the dropped state.
                             IntOffset(
-                                x = (dragOffset.x * dragOptions.onDragScaleY / dragOptions.onDropScaleX).roundToInt(),
-                                y = (dragOffset.y * dragOptions.onDragScaleY / dragOptions.onDropScaleY).roundToInt()
+                                x = (dragOffset.x * options.onDragScaleY / options.onDropScaleX).roundToInt(),
+                                y = (dragOffset.y * options.onDragScaleY / options.onDropScaleY).roundToInt()
                             )
                         }
                     }
@@ -159,14 +159,14 @@ class DragContext<T> {
                     val dragTargetRect = coordinates.boundsInWindow()
                     // Necessary to check if actually being dragged by the user and not moving due
                     // to an animating composable (e.g. AnimatedVisibility)
-                    if (dragStatusState.value == DragTargetStatus.DRAGGING) {
+                    if (statusState.value == DragTargetStatus.DRAGGED) {
                         // M:N relationship between drag and drop targets; i.e. one drag target can get
                         // dropped into one or more drop targets, and one drop target can have one or
                         // more drag targets dropped into it.
                         dropTargetStates.forEach { dropTargetState ->
                             if (dropTargetState.globalRect.contains(dragTargetRect.center)) {
                                 // Only associate drag/drop targets if within the configured limits
-                                if (dropTargetState.dragTargets.size < dropTargetState.dropOptions.maxDragTargets) {
+                                if (dropTargetState.dragTargets.size < dropTargetState.options.maxDragTargets) {
                                     dragTargetState.dropTargets.add(dropTargetState)
                                     dropTargetState.dragTargets.add(dragTargetState)
                                 }
@@ -177,7 +177,7 @@ class DragContext<T> {
                             // Update drop target, e.g. to show a hover indicator
                             dropTargetState.updateState()
                         }
-                    } else if (dragStatusState.value == DragTargetStatus.DROPPED && dragOptions.snapPosition != null) {
+                    } else if (statusState.value == DragTargetStatus.DROPPED && options.snapPosition != null) {
                         // This is a UX decision, but it seems to make the most sense to snap to the
                         // last target that was hovered over (e.g. if drop target A contained drop
                         // target B, and the drag target was dropped into B, then it makes sense to
@@ -196,12 +196,12 @@ class DragContext<T> {
                         // `onGloballyPositioned` will fire again and snap the drag target back to
                         // its drop target.
                         if (dragTargetRect == Rect.Zero) {
-                            dragOffsetState.value = Offset.Zero
+                            offsetState.value = Offset.Zero
                         } else {
                             val snapFromOffset =
-                                dragOptions.snapPosition.calculateOffset(dragTargetRect)
+                                options.snapPosition.calculateOffset(dragTargetRect)
                             val snapToOffset =
-                                dragOptions.snapPosition.calculateOffset(lastDropTargetRect)
+                                options.snapPosition.calculateOffset(lastDropTargetRect)
                             val remainingOffset = snapFromOffset - snapToOffset
                             // Don't re-snap if already aligned; otherwise, will result in infinite loop
                             if (remainingOffset.x.roundToInt() != 0 || remainingOffset.y.roundToInt() != 0) {
@@ -211,10 +211,10 @@ class DragContext<T> {
                                     // calculating the physical pixels that we want to offset by, we have
                                     // to transform the X and Y values based on the drag scaling factors.
                                     // See comment in the call to `Modifier.offset` for more details.
-                                    x = remainingOffset.x / dragOptions.onDragScaleX,
-                                    y = remainingOffset.y / dragOptions.onDragScaleY
+                                    x = remainingOffset.x / options.onDragScaleX,
+                                    y = remainingOffset.y / options.onDragScaleY
                                 )
-                                dragOffsetState.value -= snapOffset
+                                offsetState.value -= snapOffset
                             }
                         }
                     }
@@ -222,7 +222,7 @@ class DragContext<T> {
                 .pointerInput(Unit) {
                     detectDragGestures(
                         onDragStart = {
-                            dragStatusState.value = DragTargetStatus.DRAGGING
+                            statusState.value = DragTargetStatus.DRAGGED
                             // Provide an opportunity for drop targets to respond to drag targets
                             // being dragged back out (e.g. update state to no longer account for
                             // this drag target's data)
@@ -234,11 +234,11 @@ class DragContext<T> {
                         },
                         onDragEnd = {
                             if (dragTargetState.dropTargets.isEmpty()) {
-                                dragStatusState.value = DragTargetStatus.NONE
+                                statusState.value = DragTargetStatus.NONE
                                 // Return to original position
-                                dragOffsetState.value = Offset.Zero
+                                offsetState.value = Offset.Zero
                             } else {
-                                dragStatusState.value = DragTargetStatus.DROPPED
+                                statusState.value = DragTargetStatus.DROPPED
                                 // It is the responsibility of the onDrop callback to update state
                                 // in such a way that this DropTarget leaves the composition (if desired).
                                 dragTargetState.dropTargets.forEach { dropTarget ->
@@ -251,12 +251,12 @@ class DragContext<T> {
                         },
                         onDrag = { change, dragAmount ->
                             change.consume()
-                            dragOffsetState.value += dragAmount
+                            offsetState.value += dragAmount
                         }
                     )
                 }
         ) {
-            content(dragStatusState.value)
+            content(statusState.value)
         }
     }
 
@@ -264,7 +264,7 @@ class DragContext<T> {
         var globalRect: Rect = Rect.Zero,
         val onDragTargetAdded: (T) -> Unit = {},
         val onDragTargetRemoved: (T) -> Unit = {},
-        val dropOptions: DropOptions = DropOptions(),
+        val options: DropOptions = DropOptions(),
         val dragTargets: MutableSet<DragTargetState> = mutableSetOf(),
         val isHovered: MutableState<Boolean> = mutableStateOf(false)
     ) {
@@ -293,18 +293,18 @@ class DragContext<T> {
     private fun rememberDropTargetState(
         onDragTargetAdded: (T) -> Unit,
         onDragTargetRemoved: (T) -> Unit,
-        dropOptions: DropOptions = DropOptions(),
+        options: DropOptions = DropOptions(),
         content: @Composable (Boolean) -> Unit
     ): DropTargetState {
         val dropTargetState =
-            remember(onDragTargetAdded, onDragTargetRemoved, dropOptions, content) {
+            remember(onDragTargetAdded, onDragTargetRemoved, options, content) {
                 DropTargetState(
                     onDragTargetAdded = onDragTargetAdded,
                     onDragTargetRemoved = onDragTargetRemoved,
-                    dropOptions = dropOptions
+                    options = options
                 )
             }
-        DisposableEffect(onDragTargetAdded, onDragTargetRemoved, dropOptions, content) {
+        DisposableEffect(onDragTargetAdded, onDragTargetRemoved, options, content) {
             dropTargetStates.add(dropTargetState)
             onDispose {
                 dropTargetState.onDispose()
@@ -319,11 +319,11 @@ class DragContext<T> {
         onDragTargetAdded: (T) -> Unit,
         // Not required because there may be no need to respond to re-drag events
         onDragTargetRemoved: (T) -> Unit = {},
-        dropOptions: DropOptions = DropOptions(),
+        options: DropOptions = DropOptions(),
         content: @Composable (Boolean) -> Unit
     ) {
         val dropTargetState =
-            rememberDropTargetState(onDragTargetAdded, onDragTargetRemoved, dropOptions, content)
+            rememberDropTargetState(onDragTargetAdded, onDragTargetRemoved, options, content)
         Box(
             modifier = Modifier.onGloballyPositioned {
                 dropTargetState.globalRect = it.boundsInWindow()

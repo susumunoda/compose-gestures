@@ -12,4 +12,4 @@ TODO
 TODO
 
 ## Demo
-https://github.com/susumunoda/compose-gestures/assets/5313576/f87b8dc0-2b6d-425b-9669-819b81ccf00a
+https://github.com/susumunoda/compose-gestures/assets/5313576/40cf6f7d-f881-4e8b-bb8e-b23a19e7ee56

@@ -43,6 +43,7 @@ enum class SnapPosition(val calculateOffset: (Rect) -> Offset) {
 }
 
 enum class DragTargetStatus { NONE, DRAGGED, DROPPED }
+enum class DropTargetStatus { NONE, HOVERED, DROPPED }
 
 class DragContext<T> {
     private inner class DragTargetState(
@@ -157,13 +158,12 @@ class DragContext<T> {
                 }
                 .onGloballyPositioned { coordinates ->
                     val dragTargetRect = coordinates.boundsInWindow()
-                    // Necessary to check if actually being dragged by the user and not moving due
-                    // to an animating composable (e.g. AnimatedVisibility)
-                    if (statusState.value == DragTargetStatus.DRAGGED) {
-                        // M:N relationship between drag and drop targets; i.e. one drag target can get
-                        // dropped into one or more drop targets, and one drop target can have one or
-                        // more drag targets dropped into it.
-                        dropTargetStates.forEach { dropTargetState ->
+
+                    // Keep drag target and drop targets in sync with each other
+                    dropTargetStates.forEach { dropTargetState ->
+                        // Link/unlink drag target and drop targets only if the drag target is
+                        // actually being moved by the user and not, for example, by an animation
+                        if (statusState.value == DragTargetStatus.DRAGGED) {
                             if (dropTargetState.globalRect.contains(dragTargetRect.center)) {
                                 // Only associate drag/drop targets if within the configured limits
                                 if (dropTargetState.dragTargets.size < dropTargetState.options.maxDragTargets) {
@@ -174,10 +174,14 @@ class DragContext<T> {
                                 dragTargetState.dropTargets.remove(dropTargetState)
                                 dropTargetState.dragTargets.remove(dragTargetState)
                             }
-                            // Update drop target, e.g. to show a hover indicator
-                            dropTargetState.updateState()
                         }
-                    } else if (statusState.value == DragTargetStatus.DROPPED && options.snapPosition != null) {
+
+                        // Update drop target, e.g. to add or remove a hover indicator
+                        dropTargetState.updateState()
+                    }
+
+                    // Snap-to-target behavior
+                    if (statusState.value == DragTargetStatus.DROPPED && options.snapPosition != null) {
                         // This is a UX decision, but it seems to make the most sense to snap to the
                         // last target that was hovered over (e.g. if drop target A contained drop
                         // target B, and the drag target was dropped into B, then it makes sense to
@@ -265,17 +269,31 @@ class DragContext<T> {
         val onDragTargetAdded: (T) -> Unit = {},
         val onDragTargetRemoved: (T) -> Unit = {},
         val options: DropOptions = DropOptions(),
-        val dragTargets: MutableSet<DragTargetState> = mutableSetOf(),
-        val isHovered: MutableState<Boolean> = mutableStateOf(false)
+        val status: MutableState<DropTargetStatus> = mutableStateOf(DropTargetStatus.NONE),
+        val dragTargets: MutableSet<DragTargetState> = mutableSetOf()
     ) {
         fun updateState() {
-            // We could have made dragTargets a mutableStateListOf, and DropTarget would get
-            // recomposed whenever this list changed, preventing the need for this separate
-            // isHovered state. However, because that would return a SnapshotStateList
-            // (unfortunately, there is no mutableStateSetOf), we would need to do a !contains()
-            // check before adding to dragTargets every time a drag target entered this drop target
-            // area. This seemed less clean, and for now the isHovered boolean state does what we need.
-            isHovered.value = dragTargets.isNotEmpty()
+            var hasDraggedTargets = false
+            var hasDroppedTargets = false
+
+            dragTargets.forEach {
+                when (it.status.value) {
+                    DragTargetStatus.DRAGGED -> hasDraggedTargets = true
+                    DragTargetStatus.DROPPED -> hasDroppedTargets = true
+                    DragTargetStatus.NONE -> {}
+                }
+            }
+
+            // Hovered state takes precedence over dropped state. E.g. If a drop target has two drag
+            // targets inside of it, one still being dragged and one already dropped, then we want
+            // the drop target to be in a hovered state.
+            status.value = if (hasDraggedTargets) {
+                DropTargetStatus.HOVERED
+            } else if (hasDroppedTargets) {
+                DropTargetStatus.DROPPED
+            } else {
+                DropTargetStatus.NONE
+            }
         }
 
         fun detachFromDragTargets() {
@@ -294,7 +312,7 @@ class DragContext<T> {
         onDragTargetAdded: (T) -> Unit,
         onDragTargetRemoved: (T) -> Unit,
         options: DropOptions = DropOptions(),
-        content: @Composable (Boolean) -> Unit
+        content: @Composable (DropTargetStatus) -> Unit
     ): DropTargetState {
         val dropTargetState =
             remember(onDragTargetAdded, onDragTargetRemoved, options, content) {
@@ -320,7 +338,7 @@ class DragContext<T> {
         // Not required because there may be no need to respond to re-drag events
         onDragTargetRemoved: (T) -> Unit = {},
         options: DropOptions = DropOptions(),
-        content: @Composable (Boolean) -> Unit
+        content: @Composable (DropTargetStatus) -> Unit
     ) {
         val dropTargetState =
             rememberDropTargetState(onDragTargetAdded, onDragTargetRemoved, options, content)
@@ -329,7 +347,7 @@ class DragContext<T> {
                 dropTargetState.globalRect = it.boundsInWindow()
             }
         ) {
-            content(dropTargetState.isHovered.value)
+            content(dropTargetState.status.value)
         }
     }
 }

@@ -1,6 +1,7 @@
 package com.susumunoda.compose.gestures.demo
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -33,6 +34,7 @@ import androidx.compose.ui.zIndex
 import com.susumunoda.compose.gestures.DragContext
 import com.susumunoda.compose.gestures.DragTargetStatus
 import com.susumunoda.compose.gestures.DropOptions
+import com.susumunoda.compose.gestures.DropTargetStatus
 import com.susumunoda.compose.gestures.withDragContext
 
 private val dragContext = DragContext<Float>()
@@ -98,7 +100,7 @@ private fun Coin(coin: Coin, modifier: Modifier = Modifier) {
                     .size(coin.size)
                     .clip(CircleShape)
                     .alpha(if (dragTargetStatus == DragTargetStatus.DRAGGED) .5f else 1f)
-                    .background(Color.Red),
+                    .background(Color.LightGray),
                 contentAlignment = Alignment.Center
             ) {
                 Text("${(coin.value * 100).toInt()}¢")
@@ -123,12 +125,17 @@ private fun Jar(
                 onDragTargetAdded = { total += it },
                 onDragTargetRemoved = { total -= it },
                 options = DropOptions(maxDragTargets = Int.MAX_VALUE)
-            ) {
+            ) { dropTargetStatus ->
                 Box(
                     Modifier
                         .width(80.dp)
                         .height(200.dp)
                         .background(Color.Yellow)
+                        .then(
+                            if (dropTargetStatus == DropTargetStatus.HOVERED) {
+                                Modifier.border(5.dp, Color.Red)
+                            } else Modifier
+                        )
                 )
             }
         }

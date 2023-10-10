@@ -11,5 +11,9 @@ TODO
 ## API
 TODO
 
-## Demo
+## Demos
 https://github.com/susumunoda/compose-gestures/assets/5313576/40cf6f7d-f881-4e8b-bb8e-b23a19e7ee56
+
+See the [source code](https://github.com/susumunoda/compose-gestures/blob/main/demo-app/src/main/java/com/susumunoda/compose/gestures/demo/CoinJars.kt).
+
+For a more complex example, see [susumunoda/word-game](https://github.com/susumunoda/word-game).

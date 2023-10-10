@@ -31,7 +31,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import com.susumunoda.compose.gestures.DragContext
-import com.susumunoda.compose.gestures.DragStatus
+import com.susumunoda.compose.gestures.DragTargetStatus
 import com.susumunoda.compose.gestures.DropOptions
 import com.susumunoda.compose.gestures.withDragContext
 
@@ -92,12 +92,12 @@ fun CoinJars() {
 @Composable
 private fun Coin(coin: Coin, modifier: Modifier = Modifier) {
     withDragContext(dragContext) {
-        DragTarget(data = coin.value) { dragStatus ->
+        DragTarget(data = coin.value) { dragTargetStatus ->
             Box(
                 modifier = modifier
                     .size(coin.size)
                     .clip(CircleShape)
-                    .alpha(if (dragStatus == DragStatus.DRAGGING) .5f else 1f)
+                    .alpha(if (dragTargetStatus == DragTargetStatus.DRAGGING) .5f else 1f)
                     .background(Color.Red),
                 contentAlignment = Alignment.Center
             ) {

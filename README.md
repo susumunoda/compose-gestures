@@ -12,10 +12,39 @@ In both of these cases, detection of user input is handled separately from actua
 
 The `DragContext` API was created to enable flexible drag-and-drop behavior while encapsulating the complexity of the implementation details so that developers can focus on core app logic instead. Phrased differently, the `DragContext` API is meant to be a declarative way to specify drag-and-drop behavior — to specify _what_ you want to be dragged and dropped without needing to specify _how_.
 
-## Reference
-TODO
-
 ## Usage
+To use the `DragContext` API, first create an instance of `DragContext<T>` where `T` is the type parameter specifying the type of data that will be dropped into the drop target:
+```kotlin
+val dragContext = DragContext<Int>()
+```
+
+Next, specify a drag target by wrapping the desired composable in the `DragTarget` composable, which is a member function of the `dragContext` instance. For convenience, the `withDragContext` function is provided so that you can do:
+```kotlin
+withDragContext(dragContext) {
+  DragTarget(data = ...) {
+    // Your composable here
+  }
+}
+```
+instead of
+```kotlin
+dragContext.DragTarget(data = ...) { ... }
+```
+
+The next step is to specify a drop target by wrapping the desired composable in the `DropTarget` composable, similar to how `DragTarget` was configured:
+```kotlin
+withDragContext(dragContext) {
+  DropTarget(onDragTargetAdded = { ... }) {
+    // Your composable here
+  }
+}
+```
+
+**Note:** It is important that the same `DragContext` instance be used for both the `DragTarget` and `DropTarget`. This is because all of the internal state of the drag-and-drop items — e.g. the drag targets' positions, the drop targets' callbacks, etc. — are all contained internally in the `DragContext`.
+
+**Tip:** While in this example the `dragContext` is locally accessible to both the `DragTarget` and `DropTarget` calls, this may not be the case in a larger, more complex application. In such cases, the `DragContext` instance can be provided to deeply nested areas of the application by creating a [`CompositionLocal`](https://developer.android.com/reference/kotlin/androidx/compose/runtime/CompositionLocal). For an example of this, see the [`susumunoda/word-game`](https://github.com/susumunoda/word-game) repository: [where the `CompositionLocal` is defined](https://github.com/susumunoda/word-game/blob/aa68377e2e025eeedeb8ab90b9cfc643338474fa/shared/src/commonMain/kotlin/com/susumunoda/wordgame/ui/screen/game/GameScreen.kt#L22), [where it is used to set up `DragTarget`s](https://github.com/susumunoda/word-game/blob/aa68377e2e025eeedeb8ab90b9cfc643338474fa/shared/src/commonMain/kotlin/com/susumunoda/wordgame/ui/screen/game/PlayerTilesSection.kt#L204), and [where it is used to set up `DropTarget`s](https://github.com/susumunoda/word-game/blob/aa68377e2e025eeedeb8ab90b9cfc643338474fa/shared/src/commonMain/kotlin/com/susumunoda/wordgame/ui/screen/game/GridSection.kt#L87).
+
+## Reference
 TODO
 
 ## Demos
